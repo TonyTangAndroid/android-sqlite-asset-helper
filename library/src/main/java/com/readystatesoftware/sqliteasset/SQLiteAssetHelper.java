@@ -23,13 +23,11 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.zip.ZipInputStream;
 
 /**
  * A helper class to manage database creation and version management using an application's raw
@@ -55,7 +53,6 @@ import java.util.zip.ZipInputStream;
  */
 public class SQLiteAssetHelper extends SQLiteOpenHelper {
 
-  private static final String TAG = SQLiteAssetHelper.class.getSimpleName();
   private static final String ASSET_DB_PATH = "databases";
 
   private final Context context;
@@ -187,7 +184,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
           } else {
             if (version > newVersion) {
               Log.w(
-                  TAG,
+                  SqliteAssetUtil.TAG,
                   "Can't downgrade read-only database from version "
                       + version
                       + " to "
@@ -256,7 +253,10 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
       return getWritableDatabase();
     } catch (SQLiteException e) {
       if (databaseName == null) throw e; // Can't open a temp database read-only!
-      Log.e(TAG, "Couldn't open " + databaseName + " for writing (will try read-only):", e);
+      Log.e(
+          SqliteAssetUtil.TAG,
+          "Couldn't open " + databaseName + " for writing (will try read-only):",
+          e);
     }
 
     SQLiteDatabase db = null;
@@ -275,7 +275,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
       }
 
       onOpen(db);
-      Log.w(TAG, "Opened " + databaseName + " in read-only mode");
+      Log.w(SqliteAssetUtil.TAG, "Opened " + databaseName + " in read-only mode");
       database = db;
       return database;
     } finally {
@@ -311,7 +311,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
     Log.w(
-        TAG,
+        SqliteAssetUtil.TAG,
         "Upgrading database "
             + databaseName
             + " from version "
@@ -324,7 +324,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     getUpgradeFilePaths(oldVersion, newVersion - 1, newVersion, paths);
 
     if (paths.isEmpty()) {
-      Log.e(TAG, "no upgrade script path from " + oldVersion + " to " + newVersion);
+      Log.e(SqliteAssetUtil.TAG, "no upgrade script path from " + oldVersion + " to " + newVersion);
       throw new SQLiteAssetException(
           "no upgrade script path from " + oldVersion + " to " + newVersion);
     }
@@ -332,7 +332,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     Collections.sort(paths, new VersionComparator());
     for (String path : paths) {
       try {
-        Log.w(TAG, "processing upgrade: " + path);
+        Log.w(SqliteAssetUtil.TAG, "processing upgrade: " + path);
         InputStream is = context.getAssets().open(path);
         String sql = ScriptUtil.convertStreamToString(is);
         if (sql != null) {
@@ -350,7 +350,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     }
 
     Log.w(
-        TAG,
+        SqliteAssetUtil.TAG,
         "Successfully upgraded database "
             + databaseName
             + " from version "
@@ -411,13 +411,15 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     if (db != null) {
       // database already exists
       if (force) {
-        Log.w(TAG, "forcing database upgrade!");
-        copyDatabaseFromAssets();
+        Log.w(SqliteAssetUtil.TAG, "forcing database upgrade!");
+        SqliteAssetUtil.copyDatabaseFromAssets(
+            assetPath, databasePath, databaseName, context.getAssets());
         db = returnDatabase();
       }
     } else {
       // database does not exist, copy it from assets and return it
-      copyDatabaseFromAssets();
+      SqliteAssetUtil.copyDatabaseFromAssets(
+          assetPath, databasePath, databaseName, context.getAssets());
       db = returnDatabase();
     }
     return db;
@@ -428,69 +430,12 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
       SQLiteDatabase db =
           SQLiteDatabase.openDatabase(
               databasePath + "/" + databaseName, factory, SQLiteDatabase.OPEN_READWRITE);
-      Log.i(TAG, "successfully opened database " + databaseName);
+      Log.i(SqliteAssetUtil.TAG, "successfully opened database " + databaseName);
       return db;
     } catch (SQLiteException e) {
-      Log.w(TAG, "could not open database " + databaseName + " - " + e.getMessage());
+      Log.w(
+          SqliteAssetUtil.TAG, "could not open database " + databaseName + " - " + e.getMessage());
       return null;
-    }
-  }
-
-  @SuppressWarnings({"IOStreamConstructor", "ResultOfMethodCallIgnored"})
-  private void copyDatabaseFromAssets() throws SQLiteAssetException {
-    Log.w(TAG, "copying database from assets...");
-
-    String path = assetPath;
-    String dest = databasePath + "/" + databaseName;
-    InputStream is;
-    boolean isZip = false;
-
-    try {
-      // try uncompressed
-      is = context.getAssets().open(path);
-    } catch (IOException e) {
-      // try zip
-      try {
-        is = context.getAssets().open(path + ".zip");
-        isZip = true;
-      } catch (IOException e2) {
-        // try gzip
-        try {
-          is = context.getAssets().open(path + ".gz");
-        } catch (IOException e3) {
-          SQLiteAssetException se =
-              new SQLiteAssetException(
-                  "Missing "
-                      + assetPath
-                      + " file (or .zip, .gz archive) in assets, or target folder not writable");
-          se.setStackTrace(e3.getStackTrace());
-          throw se;
-        }
-      }
-    }
-
-    try {
-      File f = new File(databasePath + "/");
-      if (!f.exists()) {
-        f.mkdir();
-      }
-      if (isZip) {
-        ZipInputStream zis = ScriptUtil.getFileFromZip(is);
-        if (zis == null) {
-          throw new SQLiteAssetException("Archive is missing a SQLite database file");
-        }
-        ScriptUtil.writeExtractedFileToDisk(zis, new FileOutputStream(dest));
-      } else {
-        ScriptUtil.writeExtractedFileToDisk(is, new FileOutputStream(dest));
-      }
-
-      Log.w(TAG, "database copy complete");
-
-    } catch (IOException e) {
-      SQLiteAssetException se =
-          new SQLiteAssetException("Unable to write " + dest + " to data directory");
-      se.setStackTrace(e.getStackTrace());
-      throw se;
     }
   }
 
@@ -499,7 +444,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     try {
       return context.getAssets().open(path);
     } catch (IOException e) {
-      Log.w(TAG, "missing database upgrade script: " + path);
+      Log.w(SqliteAssetUtil.TAG, "missing database upgrade script: " + path);
       return null;
     }
   }
