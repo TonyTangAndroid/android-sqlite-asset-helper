@@ -1,7 +1,6 @@
 package com.readystatesoftware.sqliteasset;
 
 import android.util.Log;
-import com.readystatesoftware.sqliteasset.SQLiteAssetHelper.SQLiteAssetException;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.regex.Matcher;
