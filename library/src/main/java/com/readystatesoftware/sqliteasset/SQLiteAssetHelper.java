@@ -46,6 +46,8 @@ import java.util.zip.ZipInputStream;
  * <p>For examples see <a href="https://github.com/jgilfelt/android-sqlite-asset-helper">
  * https://github.com/jgilfelt/android-sqlite-asset-helper</a>
  *
+ * <p>
+ *
  * <p class="note"><strong>Note:</strong> this class assumes monotonically increasing version
  * numbers for upgrades. Also, there is no concept of a database downgrade; installing a new version
  * of your app which uses a lower version number than a previously-installed version will result in
@@ -64,11 +66,11 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
   private SQLiteDatabase mDatabase = null;
   private boolean mIsInitializing = false;
 
-  private String mDatabasePath;
+  private final String mDatabasePath;
 
-  private String mAssetPath;
+  private final String mAssetPath;
 
-  private String mUpgradePathFormat;
+  private final String mUpgradePathFormat;
 
   private int mForcedUpgradeVersion = 0;
 
@@ -131,6 +133,8 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
    * database.) Errors such as bad permissions or a full disk may cause this method to fail, but
    * future attempts may succeed if the problem is fixed.
    *
+   * <p>
+   *
    * <p class="caution">Database upgrade may take a long time, you should not call this method from
    * the application main thread, including from {@link android.content.ContentProvider#onCreate
    * ContentProvider.onCreate()}.
@@ -159,11 +163,6 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     // if (mDatabase != null) mDatabase.lock();
     try {
       mIsInitializing = true;
-      // if (mName == null) {
-      //    db = SQLiteDatabase.create(null);
-      // } else {
-      //    db = mContext.openOrCreateDatabase(mName, 0, mFactory);
-      // }
       db = createOrOpenDatabase(false);
 
       int version = db.getVersion();
@@ -210,6 +209,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
           try {
             mDatabase.close();
           } catch (Exception e) {
+            e.printStackTrace();
           }
           // mDatabase.unlock();
         }
@@ -227,6 +227,8 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
    * opened read-only. In that case, a read-only database object will be returned. If the problem is
    * fixed, a future call to {@link #getWritableDatabase} may succeed, in which case the read-only
    * database object will be closed and the read/write object will be returned in the future.
+   *
+   * <p>
    *
    * <p class="caution">Like {@link #getWritableDatabase}, this method may take a long time to
    * return, so you should not call it from the application main thread, including from {@link
@@ -299,6 +301,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     // getWritableDatabase() to handle database creation.
   }
 
+  @SuppressWarnings("Java8ListSort")
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
@@ -312,7 +315,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
             + newVersion
             + "...");
 
-    ArrayList<String> paths = new ArrayList<String>();
+    ArrayList<String> paths = new ArrayList<>();
     getUpgradeFilePaths(oldVersion, newVersion - 1, newVersion, paths);
 
     if (paths.isEmpty()) {
@@ -328,8 +331,8 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
         InputStream is = mContext.getAssets().open(path);
         String sql = Utils.convertStreamToString(is);
         if (sql != null) {
-          List<String> cmds = Utils.splitSqlScript(sql, ';');
-          for (String cmd : cmds) {
+          List<String> commandList = Utils.splitSqlScript(sql, ';');
+          for (String cmd : commandList) {
             // Log.d(TAG, "cmd=" + cmd);
             if (cmd.trim().length() > 0) {
               db.execSQL(cmd);
@@ -384,6 +387,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
    * Bypass the upgrade process for every version increment and simply overwrite the existing
    * database with the supplied asset file.
    */
+  @SuppressWarnings("unused")
   public void setForcedUpgrade() {
     setForcedUpgrade(mNewVersion);
   }
@@ -406,13 +410,12 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
         copyDatabaseFromAssets();
         db = returnDatabase();
       }
-      return db;
     } else {
       // database does not exist, copy it from assets and return it
       copyDatabaseFromAssets();
       db = returnDatabase();
-      return db;
     }
+    return db;
   }
 
   private SQLiteDatabase returnDatabase() {
@@ -428,6 +431,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
     }
   }
 
+  @SuppressWarnings({"IOStreamConstructor", "ResultOfMethodCallIgnored"})
   private void copyDatabaseFromAssets() throws SQLiteAssetException {
     Log.w(TAG, "copying database from assets...");
 
@@ -507,13 +511,13 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
       // Log.d(TAG, "found script: " + path);
       a = start - 1;
       b = start;
-      is = null;
     } else {
       a = start - 1;
       b = end;
     }
 
     if (a < baseVersion) {
+      //noinspection UnnecessaryReturnStatement
       return;
     } else {
       getUpgradeFilePaths(baseVersion, a, b, paths); // recursive call
@@ -521,7 +525,7 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
   }
 
   /** An exception that indicates there was an error with SQLite asset retrieval or parsing. */
-  @SuppressWarnings("serial")
+  @SuppressWarnings("unused")
   public static class SQLiteAssetException extends SQLiteException {
 
     public SQLiteAssetException() {}

@@ -3,6 +3,7 @@ package com.readystatesoftware.sqliteasset;
 import android.util.Log;
 import com.readystatesoftware.sqliteasset.SQLiteAssetHelper.SQLiteAssetException;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,7 @@ class VersionComparator implements Comparator<String> {
 
   private static final String TAG = SQLiteAssetHelper.class.getSimpleName();
 
-  private Pattern pattern = Pattern.compile(".*_upgrade_([0-9]+)-([0-9]+).*");
+  private final Pattern pattern = Pattern.compile(".*_upgrade_([0-9]+)-([0-9]+).*");
 
   /**
    * Compares the two specified upgrade script strings to determine their relative ordering
@@ -48,10 +49,10 @@ class VersionComparator implements Comparator<String> {
       throw new SQLiteAssetException("Invalid upgrade script file");
     }
 
-    int v0_from = Integer.valueOf(m0.group(1));
-    int v1_from = Integer.valueOf(m1.group(1));
-    int v0_to = Integer.valueOf(m0.group(2));
-    int v1_to = Integer.valueOf(m1.group(2));
+    int v0_from = Integer.parseInt(Objects.requireNonNull(m0.group(1)));
+    int v1_from = Integer.parseInt(Objects.requireNonNull(m1.group(1)));
+    int v0_to = Integer.parseInt(Objects.requireNonNull(m0.group(2)));
+    int v1_to = Integer.parseInt(Objects.requireNonNull(m1.group(2)));
 
     if (v0_from == v1_from) {
       // 'from' versions match for both; check 'to' version next

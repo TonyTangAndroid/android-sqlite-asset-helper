@@ -15,7 +15,7 @@ class Utils {
   private static final String TAG = SQLiteAssetHelper.class.getSimpleName();
 
   public static List<String> splitSqlScript(String script, char delim) {
-    List<String> statements = new ArrayList<String>();
+    List<String> statements = new ArrayList<>();
     StringBuilder sb = new StringBuilder();
     boolean inLiteral = false;
     char[] content = script.toCharArray();
@@ -53,6 +53,7 @@ class Utils {
   public static ZipInputStream getFileFromZip(InputStream zipFileStream) throws IOException {
     ZipInputStream zis = new ZipInputStream(zipFileStream);
     ZipEntry ze;
+    //noinspection LoopStatementThatDoesntLoop
     while ((ze = zis.getNextEntry()) != null) {
       Log.w(TAG, "extracting file: '" + ze.getName() + "'...");
       return zis;
