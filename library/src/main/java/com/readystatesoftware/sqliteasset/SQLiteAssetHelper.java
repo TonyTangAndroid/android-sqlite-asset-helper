@@ -412,14 +412,12 @@ public class SQLiteAssetHelper extends SQLiteOpenHelper {
       // database already exists
       if (force) {
         Log.w(SqliteAssetUtil.TAG, "forcing database upgrade!");
-        SqliteAssetUtil.copyDatabaseFromAssets(
-            assetPath, databasePath, databaseName, context.getAssets());
+        SqliteAssetUtil.copyDatabaseFromAssets(assetPath, databasePath, databaseName, context);
         db = returnDatabase();
       }
     } else {
       // database does not exist, copy it from assets and return it
-      SqliteAssetUtil.copyDatabaseFromAssets(
-          assetPath, databasePath, databaseName, context.getAssets());
+      SqliteAssetUtil.copyDatabaseFromAssets(assetPath, databasePath, databaseName, context);
       db = returnDatabase();
     }
     return db;

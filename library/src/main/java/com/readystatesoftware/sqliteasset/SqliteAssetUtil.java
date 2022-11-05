@@ -1,5 +1,6 @@
 package com.readystatesoftware.sqliteasset;
 
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
 import java.io.File;
@@ -14,10 +15,16 @@ class SqliteAssetUtil {
 
   private SqliteAssetUtil() {}
 
-  @SuppressWarnings({"IOStreamConstructor", "ResultOfMethodCallIgnored"})
   static void copyDatabaseFromAssets(
-      String assetPath, String databasePath, String databaseName, AssetManager assets)
+      String assetPath, String databasePath, String databaseName, Context context)
       throws SQLiteAssetException {
+    AssetManager assets = context.getAssets();
+    copyInternal(assetPath, databasePath, databaseName, assets);
+  }
+
+  @SuppressWarnings({"IOStreamConstructor", "ResultOfMethodCallIgnored"})
+  private static void copyInternal(
+      String assetPath, String databasePath, String databaseName, AssetManager assets) {
     Log.w(TAG, "copying database from assets...");
 
     String dest = databasePath + "/" + databaseName;
