@@ -1,0 +1,15 @@
+dependencies {
+  testImplementation 'androidx.test:core:1.4.0'
+  testImplementation 'androidx.test.ext:junit:1.1.3'
+
+  testImplementation 'org.robolectric:junit:4.9'
+  testImplementation 'org.robolectric:sandbox:4.9'
+  testImplementation 'org.robolectric:robolectric:4.9'
+  testImplementation 'org.robolectric:shadowapi:4.9'
+  testImplementation 'org.robolectric:annotations:4.9'
+  testImplementation 'org.robolectric:shadows-framework:4.9'
+
+  testImplementation 'junit:junit:4.13.2'
+  testImplementation "com.google.truth:truth:1.1.3"
+  testImplementation 'commons-io:commons-io:2.11.0'
+ }

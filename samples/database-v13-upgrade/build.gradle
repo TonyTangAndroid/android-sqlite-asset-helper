@@ -1,35 +1,15 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.7.+'
-    }
+plugins {
+    id 'com.android.application'
 }
-apply plugin: 'android'
-
-repositories {
-    mavenCentral()
-}
-
+apply from: "$rootDir/gradle/android.gradle"
+apply from: "$rootDir/gradle/android_test_implementation.gradle"
 android {
-    compileSdkVersion 19
-    buildToolsVersion "19.0.0"
-
     defaultConfig {
-        minSdkVersion 8
-        targetSdkVersion 19
-        versionCode 3
-        versionName "3.0"
+        applicationId 'com.example.sqliteassethelper'
     }
-    buildTypes {
-        release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-    }
+    namespace 'com.example.sqliteassethelper'
 }
 
 dependencies {
-    compile project(':library')
+    implementation project(':library')
 }

@@ -1,1 +1,22 @@
-include ':library', 'samples:database-v13-upgrade', 'samples:database-v1', 'samples:database-v2-upgrade'
+pluginManagement {
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+    google()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+  }
+}
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    mavenCentral()
+    google()
+    maven { url 'https://jitpack.io' }
+  }
+}
+rootProject.name = "sqliteAsset"
+
+include ':library'
+include 'samples:database-v13-upgrade'
+include 'samples:database-v1'
+include 'samples:database-v2-upgrade'
